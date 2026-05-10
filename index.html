@@ -428,24 +428,34 @@ function setBilling(modo){
   document.body.dataset.billing = modo;
   document.querySelectorAll('.billing-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.bill===modo));
 }
-function enviarLista(e){
+async function enviarLista(e){
   e.preventDefault();
   const f = e.target;
+  const btn = f.querySelector('button[type=submit]');
+  const txtOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
   const dados = {
     nome: f.nome.value, empresa: f.empresa.value,
     email: f.email.value, whatsapp: f.whatsapp.value,
     tamanho: f.tamanho.value, data: new Date().toISOString()
   };
-  // Salva local enquanto não tem backend
-  const lista = JSON.parse(localStorage.getItem('waitlist')||'[]');
-  lista.push(dados);
-  localStorage.setItem('waitlist', JSON.stringify(lista));
 
-  // TODO: trocar pelo endpoint real (Formspree, Google Forms, ou backend próprio)
-  // fetch('https://formspree.io/f/SEU_ID', {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify(dados)});
-
-  f.style.display='none';
-  document.getElementById('success').style.display='block';
+  try{
+    const r = await fetch('https://formspree.io/f/mojrpega', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify(dados)
+    });
+    if(!r.ok) throw new Error('falha no envio');
+    f.style.display='none';
+    document.getElementById('success').style.display='block';
+  }catch(err){
+    btn.disabled = false;
+    btn.textContent = txtOriginal;
+    alert('Erro ao enviar. Tente novamente em alguns segundos ou chame no WhatsApp.');
+  }
   return false;
 }
 </script>
